@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nimbus — Weather</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+  <!-- Atmospheric background -->
+  <div class="bg-canvas" aria-hidden="true">
+    <div class="bg-orbs">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+      <div class="orb orb-4"></div>
+    </div>
+    <div class="bg-grid"></div>
+    <div class="bg-noise"></div>
+  </div>
+
+  <div class="app-wrapper">
+
+    <!-- ── Header ── -->
+    <header class="app-header">
+      <div class="logo">
+        <div class="logo-mark" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <circle cx="14" cy="14" r="13" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+            <path d="M7 14 C7 10.134 10.134 7 14 7 C17.866 7 21 10.134 21 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M4 17 Q7 14 10 16 Q13 18 16 15 Q19 12 24 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+            <circle cx="14" cy="14" r="2.5" fill="currentColor"/>
+          </svg>
+        </div>
+        <span class="logo-text">WeatherNow</span>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark/light mode" title="Toggle theme">
+        <span class="theme-icon" id="themeIcon">☀</span>
+      </button>
+    </header>
+
+    <!-- ── Search ── -->
+    <section class="search-section" aria-label="City search">
+      <div class="search-container">
+        <div class="search-bar" role="search">
+          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input
+            type="text"
+            id="searchInput"
+            class="search-input"
+            placeholder="Search any city…"
+            autocomplete="off"
+            aria-label="Search for a city"
+          />
+          <button class="search-btn" id="searchBtn" aria-label="Search weather">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+        <button class="location-btn" id="locationBtn" aria-label="Use my current location">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+            <circle cx="12" cy="12" r="8" opacity="0.3"/>
+          </svg>
+          <span>My Location</span>
+        </button>
+      </div>
+
+      <!-- Search history chips -->
+      <div class="history-row" id="historyRow" aria-label="Recent searches" role="list"></div>
+    </section>
+
+    <!-- ── Loading Spinner ── -->
+    <div class="loader-wrapper" id="loader" hidden aria-live="polite" aria-busy="true">
+      <div class="loader-rings">
+        <div class="loader-ring ring-1"></div>
+        <div class="loader-ring ring-2"></div>
+        <div class="loader-dot"></div>
+      </div>
+      <p class="loader-text">Reading the skies…</p>
+    </div>
+
+    <!-- ── Error Message ── -->
+    <div class="error-card" id="errorCard" hidden role="alert" aria-live="assertive">
+      <div class="error-icon-wrap" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <p id="errorMsg">City not found. Please try again.</p>
+    </div>
+
+    <!-- ── Main Weather Card ── -->
+    <main class="weather-main" id="weatherMain" hidden aria-label="Current weather information">
+
+      <!-- Current weather -->
+      <div class="current-card glass-card">
+
+        <!-- Top strip: location + icon -->
+        <div class="current-top">
+          <div class="location-info">
+            <div class="location-pill" aria-hidden="true">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+              </svg>
+            </div>
+            <h1 class="city-name" id="cityName">—</h1>
+            <p class="country-date" id="countryDate">—</p>
+          </div>
+          <div class="weather-icon-wrap" id="weatherIconWrap" aria-label="Weather condition icon">
+            <div class="weather-icon-large" id="weatherIconLarge" aria-hidden="true">🌤</div>
+            <div class="icon-glow" aria-hidden="true"></div>
+          </div>
+        </div>
+
+        <!-- Temperature block -->
+        <div class="current-mid">
+          <div class="temp-block">
+            <span class="temperature" id="temperature" aria-label="Temperature">—</span>
+            <div class="temp-meta">
+              <span class="temp-unit" aria-label="Celsius">°C</span>
+              <p class="weather-description" id="weatherDescription">—</p>
+              <p class="feels-like" id="feelsLike">Feels like —°C</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats row -->
+        <div class="current-stats" role="list" aria-label="Weather statistics">
+          <div class="stat-item" role="listitem">
+            <div class="stat-icon-wrap" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" opacity="0.9">
+                <path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z" opacity="0.2"/>
+                <path d="M12 6v8M9 11l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Humidity</span>
+              <span class="stat-value" id="humidity">—%</span>
+            </div>
+          </div>
+          <div class="stat-divider" aria-hidden="true"></div>
+          <div class="stat-item" role="listitem">
+            <div class="stat-icon-wrap" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Wind</span>
+              <span class="stat-value" id="windSpeed">— km/h</span>
+            </div>
+          </div>
+          <div class="stat-divider" aria-hidden="true"></div>
+          <div class="stat-item" role="listitem">
+            <div class="stat-icon-wrap" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <circle cx="12" cy="12" r="3"/><path d="M2 12h2M20 12h2M12 2v2M12 20v2"/>
+                <path d="m4.93 4.93 1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" opacity="0.5"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Visibility</span>
+              <span class="stat-value" id="visibility">— km</span>
+            </div>
+          </div>
+          <div class="stat-divider" aria-hidden="true"></div>
+          <div class="stat-item" role="listitem">
+            <div class="stat-icon-wrap" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Pressure</span>
+              <span class="stat-value" id="pressure">— hPa</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5-day Forecast -->
+      <section class="forecast-section" aria-label="5-day weather forecast">
+        <h2 class="forecast-title">
+          <span class="forecast-title-line" aria-hidden="true"></span>
+          5-Day Forecast
+          <span class="forecast-title-line" aria-hidden="true"></span>
+        </h2>
+        <div class="forecast-grid" id="forecastGrid" role="list">
+          <!-- Forecast cards injected by JS -->
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ── Welcome State ── -->
+    <div class="welcome-state" id="welcomeState" aria-label="Welcome screen">
+      <div class="welcome-orb" aria-hidden="true">
+        <div class="welcome-icon">🌍</div>
+        <div class="welcome-ring welcome-ring-1"></div>
+        <div class="welcome-ring welcome-ring-2"></div>
+        <div class="welcome-ring welcome-ring-3"></div>
+      </div>
+      <h2 class="welcome-title">World Weather<br><em>at a Glance</em></h2>
+      <p class="welcome-sub">Search any city or tap your location to begin.</p>
+      <div class="welcome-hints" aria-hidden="true">
+        <span class="hint-chip">Tokyo</span>
+        <span class="hint-chip">London</span>
+        <span class="hint-chip">New York</span>
+        <span class="hint-chip">Sydney</span>
+      </div>
+    </div>
+
+    <footer class="app-footer">
+      <span>Powered by</span>
+      <a href="https://openweathermap.org" target="_blank" rel="noopener" aria-label="OpenWeatherMap (opens in new tab)">OpenWeatherMap</a>
+    </footer>
+
+  </div><!-- /app-wrapper -->
+
+  <script src="script.js"></script>
+</body>
+</html>
